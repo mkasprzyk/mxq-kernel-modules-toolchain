@@ -1,0 +1,36 @@
+diff --git a/Makefile b/Makefile
+index ee85d8c..33fd094 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,8 +1,12 @@
++KERNEL_DIR=$(shell pwd)/common
++
+ obj-m := snd-microbookii.o
+ snd-microbookii-objs := audio.o control.o microbookii.o
+ 
+ all:
+-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
++	#make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
++	make ARCH=arm CROSS_COMPILE=$(shell pwd)/android-ndk-r16b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi- -C $(KERNEL_DIR) SUBDIRS=$(PWD) M=$(shell pwd) modules
+ 
+ clean:
+-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
++	#make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
++	make ARCH=arm CROSS_COMPILE=$(shell pwd)/android-ndk-r16b/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/arm-linux-androideabi- -C $(KERNEL_DIR) SUBDIRS=$(PWD) M=$(shell pwd) clean
+diff --git a/control.c b/control.c
+index 0eeb14f..e09e3be 100644
+--- a/control.c
++++ b/control.c
+@@ -24,6 +24,12 @@
+ #include "microbookii.h"
+ #include "control.h"
+ 
++#include <linux/version.h>
++
++#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 13, 0))
++#  define reinit_completion(x) INIT_COMPLETION(*(x))
++#endif
++
+ static void microbookii_interrupt_in_urb_handler(struct urb *usb_urb) {
+ 	struct microbookii *mbii = usb_urb->context;
+ 	struct microbookii_message *msg = &mbii->control.msg;
